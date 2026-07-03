@@ -96,7 +96,7 @@ final class LoopwallApp: NSObject, NSApplicationDelegate {
             view.layer?.addSublayer(layer)
             window.contentView = view
 
-            window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
             screenPlayers.append(ScreenPlayer(player: player, window: window, loopToken: token))
         }
 
@@ -122,14 +122,14 @@ final class LoopwallApp: NSObject, NSApplicationDelegate {
             contentRect: screen.frame,
             styleMask: .borderless,
             backing: .buffered,
-            defer: false,
-            screen: screen
+            defer: false
         )
         window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopWindow)))
-        window.collectionBehavior = [.canJoinAllSpaces, .stationary]
+        window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
         window.isOpaque = false
         window.backgroundColor = .clear
         window.ignoresMouseEvents = true
+        window.setFrameOrigin(screen.frame.origin)
         return window
     }
 
