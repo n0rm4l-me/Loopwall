@@ -7,11 +7,12 @@ private let kLastVideoURLKey = "lastVideoURL"
 @MainActor
 final class LoopwallApp: NSObject, NSApplicationDelegate {
     var players: [(AVPlayer, NSWindow)] = []
+    var loopObservers: [Any] = []
     var statusItem: NSStatusItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
-        DispatchQueue.main.async { self.start(pickNew: false) }
+        start(pickNew: false)
     }
 
     // MARK: - Status bar
@@ -78,7 +79,7 @@ final class LoopwallApp: NSObject, NSApplicationDelegate {
             view.layer?.addSublayer(layer)
             window.contentView = view
 
-            NotificationCenter.default.addObserver(
+            let token = NotificationCenter.default.addObserver(
                 forName: .AVPlayerItemDidPlayToEndTime,
                 object: player.currentItem,
                 queue: .main
@@ -86,6 +87,7 @@ final class LoopwallApp: NSObject, NSApplicationDelegate {
                 player.seek(to: .zero)
                 player.play()
             }
+            loopObservers.append(token)
 
             player.isMuted = true
             player.play()
@@ -102,7 +104,8 @@ final class LoopwallApp: NSObject, NSApplicationDelegate {
             window.orderOut(nil)
         }
         players.removeAll()
-        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
+        loopObservers.forEach { NotificationCenter.default.removeObserver($0) }
+        loopObservers.removeAll()
     }
 
     func makeDesktopWindow(for screen: NSScreen) -> NSWindow {

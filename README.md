@@ -29,7 +29,7 @@ Grab the latest `Loopwall.app.zip` from [Releases](../../releases) and move the 
 ### Build from source
 
 ```sh
-git clone https://github.com/your-username/Loopwall.git
+git clone https://github.com/n0rm4l-me/Loopwall.git
 cd Loopwall
 make app
 ```

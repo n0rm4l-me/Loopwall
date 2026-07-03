@@ -18,5 +18,10 @@ let package = Package(
                 .linkedFramework("ServiceManagement"),
             ]
         ),
+        .testTarget(
+            name: "LoopwallTests",
+            dependencies: [],
+            path: "Tests/LoopwallTests"
+        ),
     ]
 )

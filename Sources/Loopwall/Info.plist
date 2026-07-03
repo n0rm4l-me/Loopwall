@@ -29,6 +29,7 @@
             <array>
                 <string>public.mpeg-4</string>
                 <string>com.apple.quicktime-movie</string>
+                <string>public.m4v-video</string>
             </array>
         </dict>
     </array>
