@@ -4,10 +4,15 @@ import ServiceManagement
 
 private let kLastVideoURLKey = "lastVideoURL"
 
+struct ScreenPlayer {
+    let player: AVPlayer
+    let window: NSWindow
+    let loopToken: Any
+}
+
 @MainActor
 final class LoopwallApp: NSObject, NSApplicationDelegate {
-    var players: [(AVPlayer, NSWindow)] = []
-    var loopObservers: [Any] = []
+    var screenPlayers: [ScreenPlayer] = []
     var statusItem: NSStatusItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -44,7 +49,7 @@ final class LoopwallApp: NSObject, NSApplicationDelegate {
     func updateMenuState() {
         guard let menu = statusItem?.menu else { return }
         if let muteItem = menu.item(withTag: 1) {
-            let isMuted = players.first?.0.isMuted ?? true
+            let isMuted = screenPlayers.first?.player.isMuted ?? true
             muteItem.state = isMuted ? .on : .off
         }
         if let launchItem = menu.item(withTag: 2) {
@@ -56,7 +61,7 @@ final class LoopwallApp: NSObject, NSApplicationDelegate {
 
     func start(pickNew: Bool) {
         guard let videoURL = resolveVideoURL(pickNew: pickNew) else {
-            if players.isEmpty { NSApp.terminate(nil) }
+            if screenPlayers.isEmpty { NSApp.terminate(nil) }
             return
         }
 
@@ -66,46 +71,50 @@ final class LoopwallApp: NSObject, NSApplicationDelegate {
         // Tear down previous players
         stopAll()
 
-        // Create one player per screen
+        // One shared decoder, one layer per screen
+        let player = AVPlayer(url: videoURL)
+        player.actionAtItemEnd = .none
+        player.isMuted = true
+
+        let token = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player,
+            queue: .main
+        ) { [weak player] _ in
+            player?.seek(to: .zero)
+            player?.play()
+        }
+
         for screen in NSScreen.screens {
             let window = makeDesktopWindow(for: screen)
-            let player = AVPlayer(url: videoURL)
             let layer = AVPlayerLayer(player: player)
-            layer.frame = screen.frame
+            layer.frame = CGRect(origin: .zero, size: screen.frame.size)
             layer.videoGravity = .resizeAspectFill
 
-            let view = NSView(frame: screen.frame)
+            let view = NSView(frame: CGRect(origin: .zero, size: screen.frame.size))
             view.wantsLayer = true
             view.layer?.addSublayer(layer)
             window.contentView = view
 
-            let token = NotificationCenter.default.addObserver(
-                forName: .AVPlayerItemDidPlayToEndTime,
-                object: player.currentItem,
-                queue: .main
-            ) { _ in
-                player.seek(to: .zero)
-                player.play()
-            }
-            loopObservers.append(token)
-
-            player.isMuted = true
-            player.play()
             window.makeKeyAndOrderFront(nil)
-            players.append((player, window))
+            screenPlayers.append(ScreenPlayer(player: player, window: window, loopToken: token))
         }
+
+        player.play()
 
         updateMenuState()
     }
 
     func stopAll() {
-        for (player, window) in players {
-            player.pause()
-            window.orderOut(nil)
+        // One token shared across all layers for the same player — remove once
+        if let token = screenPlayers.first?.loopToken {
+            NotificationCenter.default.removeObserver(token)
         }
-        players.removeAll()
-        loopObservers.forEach { NotificationCenter.default.removeObserver($0) }
-        loopObservers.removeAll()
+        for sp in screenPlayers {
+            sp.player.pause()
+            sp.window.orderOut(nil)
+        }
+        screenPlayers.removeAll()
     }
 
     func makeDesktopWindow(for screen: NSScreen) -> NSWindow {
@@ -131,8 +140,8 @@ final class LoopwallApp: NSObject, NSApplicationDelegate {
     }
 
     @objc func toggleMute() {
-        let newMuted = !(players.first?.0.isMuted ?? true)
-        for (player, _) in players { player.isMuted = newMuted }
+        let newMuted = !(screenPlayers.first?.player.isMuted ?? true)
+        screenPlayers.first?.player.isMuted = newMuted
         updateMenuState()
     }
 
@@ -173,7 +182,8 @@ func resolveVideoURL(pickNew: Bool) -> URL? {
     // CLI argument takes priority
     let args = CommandLine.arguments
     if args.count > 1 {
-        return URL(fileURLWithPath: args[1])
+        let url = URL(fileURLWithPath: args[1])
+        if FileManager.default.fileExists(atPath: url.path) { return url }
     }
 
     // Use remembered file unless caller wants a new one
@@ -198,7 +208,11 @@ func resolveVideoURL(pickNew: Bool) -> URL? {
     panel.allowedContentTypes = [.mpeg4Movie, .quickTimeMovie]
     panel.allowsMultipleSelection = false
     panel.canChooseDirectories = false
-    NSApp.activate(ignoringOtherApps: true)
+    if #available(macOS 14, *) {
+        NSApp.activate()
+    } else {
+        NSApp.activate(ignoringOtherApps: true)
+    }
     guard panel.runModal() == .OK else { return nil }
     return panel.url
 }
