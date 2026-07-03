@@ -13,7 +13,7 @@ Play a video as your desktop wallpaper on macOS — behind all windows, on every
 - Menu bar icon — change video, toggle mute, launch at login, quit
 - Remembers the last chosen video across launches
 - Drag & drop a video onto the Dock icon to switch
-- Hardware-accelerated decoding — ~2% CPU, ~54 MB RAM
+- Hardware-accelerated decoding — ~2% CPU, ~74 MB RAM
 
 ## Requirements
 
@@ -53,6 +53,7 @@ Loopwall.app/Contents/MacOS/Loopwall /path/to/video.mp4
 
 - Does not affect the Lock Screen (macOS does not provide a public API for this)
 - No audio by default (muted); unmute via the menu bar
+- Replaces the system dynamic wallpaper on all connected displays
 
 ## License
 
