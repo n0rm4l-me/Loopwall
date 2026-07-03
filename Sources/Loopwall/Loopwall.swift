@@ -78,7 +78,7 @@ final class LoopwallApp: NSObject, NSApplicationDelegate {
 
         let token = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
-            object: player,
+            object: player.currentItem,
             queue: .main
         ) { [weak player] _ in
             player?.seek(to: .zero)
