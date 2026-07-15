@@ -11,6 +11,7 @@ Play a video as your desktop wallpaper on macOS — behind all windows, on every
 - Works across all Mission Control Spaces
 - Supports multiple monitors
 - Menu bar icon — change video, toggle mute, launch at login, quit
+- Energy Saver — automatically pauses when the desktop is hidden, on battery, or overheating
 - Remembers the last chosen video across launches
 - Drag & drop a video onto the Dock icon to switch
 - Hardware-accelerated decoding — ~2% CPU, ~74 MB RAM
@@ -25,6 +26,18 @@ Play a video as your desktop wallpaper on macOS — behind all windows, on every
 ### Download
 
 Grab the latest `Loopwall.app.zip` from [Releases](../../releases) and move the app to `/Applications`.
+
+The app is not signed with an Apple Developer ID, so macOS Gatekeeper will
+refuse to open it — often with a misleading *"Loopwall is damaged and can't be
+opened"* message. The app is fine; this is just the quarantine flag macOS adds
+to anything downloaded from the internet. Remove it once:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/Loopwall.app
+```
+
+Then open the app normally. (Building from source avoids this entirely, since
+locally built apps are never quarantined.)
 
 ### Build from source
 
