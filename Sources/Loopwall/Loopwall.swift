@@ -18,6 +18,20 @@ final class LoopwallApp: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
         start(pickNew: false)
+
+        // Rebuild windows when monitors are connected, disconnected, or rearranged
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(screensChanged),
+            name: NSApplication.didChangeScreenParametersNotification,
+            object: nil
+        )
+    }
+
+    @objc func screensChanged() {
+        // Reuse the current video; no picker
+        guard !screenPlayers.isEmpty else { return }
+        start(pickNew: false)
     }
 
     // MARK: - Status bar

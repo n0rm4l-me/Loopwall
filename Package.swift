@@ -10,7 +10,7 @@ let package = Package(
         .executableTarget(
             name: "Loopwall",
             path: "Sources/Loopwall",
-            exclude: ["Info.plist"],
+            exclude: ["Info.plist", "AppIcon.icns"],
             linkerSettings: [
                 .linkedFramework("AppKit"),
                 .linkedFramework("AVFoundation"),
