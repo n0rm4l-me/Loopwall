@@ -155,15 +155,28 @@ final class LoopwallApp: NSObject, NSApplicationDelegate {
     }
 
     /// Single source of truth for play/pause. Never recreates windows.
+    /// Fades windows out before pausing and in before resuming.
     func evaluatePlayback() {
         guard let player = screenPlayers.first?.player else { return }
         let shouldPlay = !userPaused && !shouldPauseForEnergy
-        if shouldPlay {
-            if player.timeControlStatus == .paused { player.play() }
-        } else {
-            if player.timeControlStatus != .paused { player.pause() }
+        let isPlaying = player.timeControlStatus != .paused
+
+        if shouldPlay && !isPlaying {
+            fadeWindows(to: 1.0, duration: 0.4) { player.play() }
+        } else if !shouldPlay && isPlaying {
+            fadeWindows(to: 0.0, duration: 0.4) { player.pause() }
         }
         updateMenuState()
+    }
+
+    func fadeWindows(to alpha: CGFloat, duration: TimeInterval, completion: @escaping () -> Void) {
+        NSAnimationContext.runAnimationGroup({ ctx in
+            ctx.duration = duration
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            for sp in screenPlayers {
+                sp.window.animator().alphaValue = alpha
+            }
+        }, completionHandler: completion)
     }
 
     // MARK: - Status bar
@@ -262,6 +275,7 @@ final class LoopwallApp: NSObject, NSApplicationDelegate {
             view.layer?.addSublayer(layer)
             window.contentView = view
 
+            window.alphaValue = 0
             window.orderFrontRegardless()
             screenPlayers.append(ScreenPlayer(player: player, window: window, loopToken: token))
         }
