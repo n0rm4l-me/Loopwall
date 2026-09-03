@@ -186,6 +186,8 @@ final class LoopwallApp: NSObject, NSApplicationDelegate {
         launchItem.tag = 2
         menu.addItem(launchItem)
 
+        menu.addItem(NSMenuItem.separator())
+
         // Energy Saver submenu
         let energyItem = NSMenuItem(title: "Energy Saver", action: nil, keyEquivalent: "")
         let energyMenu = NSMenu()
