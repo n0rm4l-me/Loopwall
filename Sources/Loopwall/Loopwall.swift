@@ -202,6 +202,10 @@ final class LoopwallApp: NSObject, NSApplicationDelegate {
         menu.addItem(energyItem)
 
         menu.addItem(NSMenuItem.separator())
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        let versionItem = NSMenuItem(title: "Loopwall \(version)", action: nil, keyEquivalent: "")
+        versionItem.isEnabled = false
+        menu.addItem(versionItem)
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
 
         statusItem?.menu = menu
